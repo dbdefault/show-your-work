@@ -194,6 +194,10 @@ without being invoked.
 3. If a claim has nothing behind it, it returns `{"decision": "block"}` with
    the reason, and Claude Code hands that reason back to the agent.
 
+When it stops the agent, Claude Code shows "Stop hook error occurred" in the
+terminal. That is Claude Code's label for any hook that blocks, not a crash.
+Press `ctrl+o` to see the reason it gave the agent.
+
 **No dependencies.** It's plain Node.js: it starts in milliseconds, and there
 is nothing to install or audit.
 
