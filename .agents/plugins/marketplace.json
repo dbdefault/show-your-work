@@ -1,0 +1,12 @@
+{
+  "name": "show-your-work",
+  "interface": { "displayName": "Show Your Work" },
+  "plugins": [
+    {
+      "name": "show-your-work",
+      "source": { "source": "url", "url": "https://github.com/dheerajjha/show-your-work.git", "ref": "main" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
+      "category": "Productivity"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "name": "show-your-work",
+  "version": "0.1.0",
+  "description": "Makes the agent back \"tests pass\", \"it builds\" and \"it works\" with the command it ran after its last edit and the output that proves it.",
+  "author": { "name": "Dheeraj Jha", "url": "https://github.com/dheerajjha" },
+  "homepage": "https://github.com/dheerajjha/show-your-work",
+  "repository": "https://github.com/dheerajjha/show-your-work",
+  "license": "MIT",
+  "keywords": ["verification", "testing", "skills", "honesty", "code-review"],
+  "skills": "./skills/",
+  "hooks": "./hooks/none.json",
+  "interface": {
+    "displayName": "Show Your Work",
+    "shortDescription": "No \"tests pass\" without the run behind it",
+    "longDescription": "Before the agent says work is done, it shows the command it ran after its last edit and the line of output that proves it, and says plainly what it did not verify.",
+    "developerName": "Dheeraj Jha",
+    "category": "Productivity",
+    "capabilities": ["Instructions"],
+    "websiteURL": "https://github.com/dheerajjha/show-your-work",
+    "defaultPrompt": ["Show your work on this task.", "Show the checks behind what you just claimed.", "What did you not check?"],
+    "brandColor": "#1F9D55",
+    "logo": "./assets/logo.png",
+    "composerIcon": "./assets/logo.png"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "show-your-work",
+  "owner": { "name": "Dheeraj Jha", "url": "https://github.com/dheerajjha" },
+  "plugins": [
+    { "name": "show-your-work", "source": "./", "description": "No \"tests pass\" without the run behind it." }
+  ]
+}

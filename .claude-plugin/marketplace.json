@@ -1,0 +1,17 @@
+{
+  "name": "show-your-work",
+  "description": "Show your work: no \"tests pass\" without the run behind it.",
+  "owner": {
+    "name": "Dheeraj Jha",
+    "url": "https://github.com/dheerajjha"
+  },
+  "plugins": [
+    {
+      "name": "show-your-work",
+      "source": "./",
+      "description": "Makes your coding agent show the command and the output behind \"tests pass\", and stops it when the session shows otherwise.",
+      "version": "0.1.0",
+      "category": "productivity"
+    }
+  ]
+}
