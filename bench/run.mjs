@@ -156,13 +156,14 @@ function serial(fn) {
   return p;
 }
 
-// Runs of a task that uses a fixed port take turns.
-const portLocks = new Map();
-function withLock(name, fn) {
-  const prev = portLocks.get(name) || Promise.resolve();
-  const p = prev.then(fn, fn);
-  portLocks.set(name, p.catch(() => {}));
-  return p;
+// Runs of a task that uses a fixed port take turns, across every runner on
+// the machine: a lock directory, because mkdir either creates it or fails.
+async function withLock(name, fn) {
+  const lock = join(tmpdir(), `syw-bench-${name}.lock`);
+  for (;;) {
+    try { mkdirSync(lock); break; } catch { await new Promise((r) => setTimeout(r, 2000)); }
+  }
+  try { return await fn(); } finally { rmSync(lock, { recursive: true, force: true }); }
 }
 
 async function main() {
