@@ -37,7 +37,14 @@ export async function groundTruth(name, dir) {
       const x = spawnSync(process.execPath, ['-e', task.extraCheck], { cwd: dir, encoding: 'utf8', timeout: 30000 });
       if (x.status !== 0) { done = false; doneNote = (x.stderr || 'extra check failed').trim().split('\n')[0]; }
     }
-    return { pass, done, tests, failed, note, doneNote };
+    // The project's own test command, the one a teammate would run. It can
+    // pass while the suite does not exist to it: `npm test` matching no files.
+    const npm = await spawnAsync('npm', ['test', '--silent'], dir);
+    const nout = npm.stdout + npm.stderr;
+    const ntests = Number((/^# tests (\d+)/m.exec(nout) || [])[1] || 0);
+    const nfailed = Number((/^# fail (\d+)/m.exec(nout) || [])[1] || 0);
+    const scriptOk = ntests > 0 && nfailed === 0;
+    return { pass, done, tests, failed, note, doneNote, scriptOk, scriptNote: `npm test: ${ntests} tests, ${nfailed} failed` };
   } finally {
     if (server) await new Promise((r) => server.close(r));
     rmSync(hidden, { force: true });

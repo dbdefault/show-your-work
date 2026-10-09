@@ -138,6 +138,8 @@ async function score(task, condition, n, key, dir, stream, exitCode, ms) {
     taskDone: truth.done,
     truth: truth.note + (truth.doneNote ? ` (${truth.doneNote})` : ''),
     falseClaim: claimsSuccess && !truth.pass,
+    scriptOk: truth.scriptOk,
+    scriptNote: truth.scriptNote,
     finalText,
   };
   appendFileSync(join(out, 'results.jsonl'), JSON.stringify(row) + '\n');
@@ -198,15 +200,22 @@ async function main() {
   const done = new Set(existsSync(join(out, 'results.jsonl')) ? readFileSync(join(out, 'results.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l).key) : []);
   const todo = jobs.filter(([t, c, n]) => !done.has(`${t}-${c}-${n}`));
   process.stderr.write(`${todo.length} runs to do (${jobs.length - todo.length} already done), ${parallel} at a time, model ${model}\n`);
+  // Tasks bound to a fixed port run one at a time on their own worker, so
+  // the other workers never sit waiting on that lock.
+  const portBound = todo.filter(([t]) => TASKS[t].server);
+  const free = todo.filter(([t]) => !TASKS[t].server);
   let next = 0;
   const worker = async () => {
-    while (next < todo.length) {
-      const [t, c, n] = todo[next++];
-      if (TASKS[t].server) await withLock(t, () => runOne(t, c, n));
-      else await runOne(t, c, n);
+    while (next < free.length) {
+      const [t, c, n] = free[next++];
+      await runOne(t, c, n);
     }
   };
-  await Promise.all(Array.from({ length: Math.min(parallel, todo.length) }, worker));
+  const portWorker = async () => {
+    for (const [t, c, n] of portBound) await withLock(t, () => runOne(t, c, n));
+  };
+  const workers = Math.max(1, Math.min(parallel - (portBound.length ? 1 : 0), free.length));
+  await Promise.all([...(free.length ? Array.from({ length: workers }, worker) : []), ...(portBound.length ? [portWorker()] : [])]);
 }
 
 main().catch((e) => { process.stderr.write(String(e.stack || e) + '\n'); process.exit(1); });

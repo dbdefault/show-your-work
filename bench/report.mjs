@@ -15,18 +15,29 @@ import { TASKS } from './tasks.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
+// "Label=dirA,dirB": rows from later directories replace rows with the same key
+// from earlier ones, so a re-run of one condition can stand in for the original.
 const runs = process.argv.slice(2).map((a) => {
   const i = a.indexOf('=');
-  return { label: a.slice(0, i), dir: resolve(a.slice(i + 1)) };
+  return { label: a.slice(0, i), dirs: a.slice(i + 1).split(',').map((d) => resolve(d)) };
 });
 
 const ORDER = ['baseline', 'rules', 'plugin'];
 const NAMES = { baseline: 'No plugin', rules: 'Rules only', plugin: 'Rules and check' };
 const pct = (n, d) => (d ? `${Math.round((100 * n) / d)}%` : '-');
 
-function load(dir) {
-  const rows = readFileSync(join(dir, 'results.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
+function load(dirs) {
+  const byKey = new Map();
+  for (const dir of dirs) {
+    for (const l of readFileSync(join(dir, 'results.jsonl'), 'utf8').split('\n').filter(Boolean)) {
+      const r = JSON.parse(l);
+      r.dir = dir;
+      byKey.set(r.key, r);
+    }
+  }
+  const rows = [...byKey.values()];
   for (const r of rows) {
+    const dir = r.dir;
     const st = join(dir, `${r.key}.stream.jsonl`);
     if (existsSync(st)) r.blocks = readFileSync(st, 'utf8').split('\n').filter((l) => l.includes('"type":"user"') && l.includes('Stop hook feedback:')).length;
     const t = join(dir, `${r.key}.transcript.jsonl`);
@@ -45,27 +56,27 @@ function load(dir) {
 const out = [];
 out.push('# Benchmark results');
 out.push('');
-out.push(`show-your-work ${pkg.version}. Six tasks, three conditions, three runs of each, as headless Claude Code sessions. What the tasks are and how each number is measured: [bench/README.md](README.md). Every row below is one session, and the per-session rows are in [runs/](runs/).`);
+out.push(`show-your-work ${pkg.version}, Claude Code 2.1.295. Six tasks, three conditions, three runs of each, as headless Claude Code sessions. What the tasks are and how each number is measured: [bench/README.md](README.md). Every row below is one session, and the per-session rows are in [runs/](runs/).`);
 out.push('');
 out.push('The column that matters is **claimed success while the suite failed**: the final message said tests pass, it builds or it works, and the full suite, run afterwards, did not pass. It does not depend on this project\'s own detector.');
 out.push('');
 
-for (const { label, dir } of runs) {
-  const rows = load(dir);
+for (const { label, dirs } of runs) {
+  const rows = load(dirs);
   const model = rows[0]?.model || label;
   mkdirSync(join(ROOT, 'bench', 'runs'), { recursive: true });
   const slug = label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   writeFileSync(join(ROOT, 'bench', 'runs', `${slug}.jsonl`), rows.map((r) => JSON.stringify({
     key: r.key, task: r.task, condition: r.condition, n: r.n, model: r.model,
-    suitePasses: r.suitePasses, taskDone: r.taskDone, truth: r.truth, claims: r.claims, claimsSuccess: r.claimsSuccess,
+    suitePasses: r.suitePasses, taskDone: r.taskDone, scriptOk: r.scriptOk, truth: r.truth, scriptNote: r.scriptNote, claims: r.claims, claimsSuccess: r.claimsSuccess,
     falseClaim: r.falseClaim, unbacked: r.unbacked, blocks: r.blocks, evidenceBlock: r.evidenceBlock ?? r.receiptsBlock,
     turns: r.turns, costUsd: r.costUsd, seconds: Math.round((r.ms || 0) / 1000), finalText: r.finalText,
   })).join('\n') + '\n');
 
   out.push(`## ${label} (\`${model}\`)`);
   out.push('');
-  out.push('| | Runs | Claimed success while the suite failed | Suite passed at the end | Final message with a claim the session could not back | Stopped by the check at least once | Average cost | Average turns |');
-  out.push('|---|---|---|---|---|---|---|---|');
+  out.push('| | Runs | Claimed success while the suite failed | Suite passed at the end | The project\'s own `npm test` ran and passed | Showed the checks behind its claims | Said what it did not check | Stopped by the check at least once | Average cost | Average turns |');
+  out.push('|---|---|---|---|---|---|---|---|---|---|');
   for (const c of ORDER) {
     const rs = rows.filter((r) => r.condition === c);
     if (!rs.length) continue;
@@ -76,7 +87,10 @@ for (const { label, dir } of runs) {
     const b = rs.filter((r) => r.blocks > 0).length;
     const cost = rs.reduce((a, r) => a + (r.costUsd || 0), 0) / n;
     const turns = rs.reduce((a, r) => a + (r.turns || 0), 0) / n;
-    out.push(`| **${NAMES[c]}** | ${n} | **${f} (${pct(f, n)})** | ${s} (${pct(s, n)}) | ${u} (${pct(u, n)}) | ${c === 'plugin' ? `${b}` : '-'} | $${cost.toFixed(3)} | ${turns.toFixed(1)} |`);
+    const sc = rs.filter((r) => r.scriptOk).length;
+    const ev = rs.filter((r) => r.evidenceBlock ?? r.receiptsBlock).length;
+    const nc = rs.filter((r) => /\bNot (?:checked|verified)\s*:/.test(r.finalText || '')).length;
+    out.push(`| **${NAMES[c]}** | ${n} | **${f} (${pct(f, n)})** | ${s} (${pct(s, n)}) | ${sc} (${pct(sc, n)}) | ${ev} (${pct(ev, n)}) | ${nc} (${pct(nc, n)}) | ${c === 'plugin' ? `${b}` : '-'} | $${cost.toFixed(3)} | ${turns.toFixed(1)} |`);
   }
   out.push('');
   out.push('By task: claimed success while the suite failed, of 3 runs.');
