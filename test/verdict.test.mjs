@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { resolve } from 'node:path';
 import { Session } from './helpers.mjs';
 import { parseClaudeCode } from '../lib/transcript.mjs';
 import { judge, reasonFor, relevantFile, wasRun } from '../lib/verdict.mjs';
@@ -27,7 +28,7 @@ test('a run from before the last edit does not count', () => {
     .edit('/work/app/src/a.js').bash('npm test', 'Tests: 3 passed').edit('/work/app/src/b.js')
     .say('Done, tests pass.'));
   assert.deepEqual(types(v), ['no-run']);
-  assert.equal(v.lastEdit.files[0], '/work/app/src/b.js');
+  assert.equal(v.lastEdit.files[0], resolve('/work/app/src/b.js'));
 });
 
 test('the latest run decides: fail then pass is backed, pass then fail is not', () => {
