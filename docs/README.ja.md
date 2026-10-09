@@ -38,7 +38,7 @@ Codex、Cursor、Copilot CLI、OpenCode、Gemini CLI などは [INSTALL.md](../I
 
 ## 使う前と後
 
-下のベンチマークから、同じタスク・同じモデル(Sonnet 5)。`formatCents` のテストはドル記号を
+下のベンチマークから、同じタスク・同じモデル(EXAMPLE_MODEL)。`formatCents` のテストはドル記号を
 出力すべきなので失敗しています。ところが `src/invoice.js` は自分でも `$` を付けているので、
 素直に直すと請求書のテストが `$$4.50` を出力します。
 

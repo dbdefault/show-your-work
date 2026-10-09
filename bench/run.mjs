@@ -47,7 +47,7 @@ const ALLOWED = [
 // Variables that tie a child session to a parent one.
 const PARENT_ENV = ['CLAUDECODE', 'CLAUDE_CODE_CHILD_SESSION', 'CLAUDE_CODE_SESSION_ID', 'CLAUDE_PID', 'CLAUDE_CODE_MESSAGING_SOCKET', 'CLAUDE_CODE_BRIDGE_SESSION_ID', 'CLAUDE_CODE_SESSION_ATTENDED', 'CLAUDE_CODE_ENTRYPOINT', 'CLAUDE_JOB_DIR', 'CLAUDE_EFFORT'];
 
-function runOne(task, condition, n) {
+async function runOne(task, condition, n) {
   const key = `${task}-${condition}-${n}`;
   const dir = join(work, key);
   rmSync(dir, { recursive: true, force: true });
@@ -61,8 +61,12 @@ function runOne(task, condition, n) {
   if (condition === 'rules') env.SHOW_YOUR_WORK = 'warn';
   if (condition === 'plugin') env.SHOW_YOUR_WORK = 'block';
   const started = Date.now();
+  const child = await spawnClaude(args, { cwd: dir, env, stdio: ['ignore', 'pipe', 'pipe'] });
+  if (!child) {
+    process.stderr.write(`${key}: could not start claude, skipped\n`);
+    return null;
+  }
   return new Promise((resolveRun) => {
-    const child = spawn('claude', args, { cwd: dir, env, stdio: ['ignore', 'pipe', 'pipe'] });
     let stdout = '';
     let stderr = '';
     const timer = setTimeout(() => child.kill('SIGKILL'), 15 * 60 * 1000);
@@ -102,7 +106,12 @@ async function score(task, condition, n, key, dir, stream, exitCode, ms) {
         copyFileSync(f, transcript);
         rmSync(f, { force: true });
         rmSync(join(projects, d, sessionId), { recursive: true, force: true });
-        try { if (!readdirSync(join(projects, d)).length) rmSync(join(projects, d), { recursive: true, force: true }); } catch { /* ignore */ }
+        // Claude Code also leaves an empty memory/ folder per project.
+        try {
+          const mem = join(projects, d, 'memory');
+          if (existsSync(mem) && !readdirSync(mem).length) rmSync(mem, { recursive: true, force: true });
+          if (!readdirSync(join(projects, d)).length) rmSync(join(projects, d), { recursive: true, force: true });
+        } catch { /* ignore */ }
         break;
       }
     }
@@ -134,6 +143,21 @@ async function score(task, condition, n, key, dir, stream, exitCode, ms) {
   appendFileSync(join(out, 'results.jsonl'), JSON.stringify(row) + '\n');
   process.stderr.write(`${key.padEnd(24)} suite=${truth.pass ? 'pass' : 'FAIL'} claims=${claims.join(',') || '-'} unbacked=${row.unbacked.join(',') || '-'} blocks=${blocks} $${(row.costUsd ?? 0).toFixed(3)} ${Math.round(ms / 1000)}s\n`);
   return row;
+}
+
+// Claude Code updates itself in place, and for a moment the binary is gone.
+// Wait for it rather than failing the whole run.
+async function spawnClaude(args, opts) {
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const found = (process.env.PATH || '').split(':').some((d) => d && existsSync(join(d, 'claude')));
+    if (found) {
+      const child = spawn('claude', args, opts);
+      child.on('error', (e) => process.stderr.write(`spawn error: ${e.message}\n`));
+      return child;
+    }
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  return null;
 }
 
 // Anything a session left running in its directory (a stand-in server, a

@@ -38,7 +38,7 @@ Codex, Cursor, Copilot CLI, OpenCode, Gemini CLI 등은 [INSTALL.md](../INSTALL.
 
 ## 사용 전과 후
 
-아래 벤치마크에서 가져온 같은 작업, 같은 모델(Sonnet 5)입니다. `formatCents`의 테스트는 달러
+아래 벤치마크에서 가져온 같은 작업, 같은 모델(EXAMPLE_MODEL)입니다. `formatCents`의 테스트는 달러
 기호를 출력해야 해서 실패합니다. 그런데 `src/invoice.js`가 이미 자기 `$`를 붙이고 있어서,
 가장 단순한 수정은 청구서 테스트가 `$$4.50`을 출력하게 만듭니다.
 

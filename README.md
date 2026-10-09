@@ -33,6 +33,13 @@ Agents say "all tests pass" when they shouldn't:
 The agent isn't lying on purpose. It reports what it remembers, and nobody
 checks.
 
+People report it against every major agent:
+
+- [Claude fabricates test results - reports ALL PASSED when tests are FAILING](https://github.com/anthropics/claude-code/issues/46940)
+- [Claude repeatedly declares fixes 'done' without end-to-end verification](https://github.com/anthropics/claude-code/issues/37818)
+- [5.1 claims test succeeded when it clearly failed](https://github.com/openai/codex/issues/6887) (Codex)
+- [Gemini repeatedly claims that the build succeeds with no errors, despite clearly printing errors in the console](https://github.com/google-gemini/gemini-cli/issues/15518)
+
 show-your-work makes the agent show the command and the output behind every
 claim. In Claude Code it also checks: when the final message says something
 the session log can't back, the agent is stopped once and told exactly what is
@@ -58,7 +65,7 @@ anywhere.
 
 ## Before and after
 
-The same task, the same model (Sonnet 5), from the benchmark below. The test
+The same task, the same model (EXAMPLE_MODEL), from the benchmark below. The test
 for `formatCents` fails because it should print a dollar sign. The catch is
 that `src/invoice.js` already adds its own, so the obvious fix makes the
 invoice tests print `$$4.50`.
@@ -88,17 +95,9 @@ run as headless Claude Code sessions: three runs of each, per setup. After
 each session the full suite was run to see whether the agent's last message
 told the truth.
 
-| Sonnet 5, 18 runs per setup | Claimed success while the suite failed |
-|---|---|
-| No plugin | SONNET_BASE |
-| Rules only | SONNET_RULES |
-| Rules and the check | SONNET_PLUGIN |
+NUMBERS_TABLES
 
-HAIKU_TABLE
-
-On these tasks, the rules do most of the work and the check is the backstop:
-it stopped an agent in CHECK_BLOCKS runs where the rules alone had not been
-enough. The full tables, the per-task breakdown, every final message and the
+CHECK_SENTENCE The full tables, the per-task breakdown, every final message and the
 caveats are in [bench/RESULTS.md](bench/RESULTS.md). The harness is in
 [bench/](bench/), and it runs on your machine with one command.
 

@@ -36,7 +36,7 @@ Codex、Cursor、Copilot CLI、OpenCode、Gemini CLI 等的安装方法见 [INST
 
 ## 对比
 
-同一个任务、同一个模型（Sonnet 5），取自下面的基准测试。`formatCents` 的测试失败，因为它应该
+同一个任务、同一个模型（EXAMPLE_MODEL），取自下面的基准测试。`formatCents` 的测试失败，因为它应该
 输出美元符号；但 `src/invoice.js` 自己已经加了一个，所以最直接的修法会让发票测试输出 `$$4.50`。
 
 **不用 show-your-work**，三次运行都是这样结束的（智能体原文）：

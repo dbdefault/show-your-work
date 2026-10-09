@@ -38,7 +38,7 @@ Todo se ejecuta en local y no se envía nada a ninguna parte.
 
 ## Antes y después
 
-La misma tarea y el mismo modelo (Sonnet 5), sacados de la prueba de abajo. El test de
+La misma tarea y el mismo modelo (EXAMPLE_MODEL), sacados de la prueba de abajo. El test de
 `formatCents` falla porque debería imprimir el signo de dólar. La trampa: `src/invoice.js` ya
 añade el suyo, así que el arreglo obvio hace que los tests de la factura impriman `$$4.50`.
 

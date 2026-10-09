@@ -230,3 +230,21 @@ test('an abbreviated citation matches the run it abbreviates', () => {
   assert.equal(wasRun('npm run …', ['npm run build']), true);
   assert.equal(wasRun('npm run …', ['npm test']), false);
 });
+
+test('a narrow claim next to an open admission that the suite fails is not flagged', () => {
+  const s = new Session().user('x').edit('/work/app/src/cache.js')
+    .bash('npm test; echo "exit $?"', '# tests 2\n# pass 1\n# fail 1\nexit 1')
+    .say('My new test passes, but the full suite fails: the existing test cannot connect to the cache server.');
+  assert.deepEqual(types(run(s)), []);
+  // Without the admission, the same claim is held to the failing run.
+  const t = new Session().user('x').edit('/work/app/src/cache.js')
+    .bash('npm test', '# tests 2\n# pass 1\n# fail 1', { exit: 1 }).say('My new test passes.');
+  assert.deepEqual(types(run(t)), ['failed']);
+});
+
+test('a message that says the suite still fails is not hiding a failure', () => {
+  const s = new Session().user('x').edit('/work/app/src/cache.js')
+    .bash('npm test 2>&1; echo "exit $?"', '# tests 3\n# pass 2\n# fail 1\nexit 1')
+    .say('The full suite still exits 1: 2 of 3 tests pass, and the one failure is the existing "set then get" test, which needs the cache server.');
+  assert.deepEqual(types(run(s)), []);
+});

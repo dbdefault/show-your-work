@@ -73,3 +73,14 @@ test('regexes and file references in backticks are not cited commands', () => {
   assert.deepEqual(citedCommands('See `src/slugify.js:2` → the new regex.'), []);
   assert.deepEqual(citedCommands('- `/usr/bin/node --test` → # pass 3'), ['/usr/bin/node --test']);
 });
+
+test('a line that reports a failure is a disclosure, not a claim', () => {
+  assert.deepEqual(findClaims('Checked:\n- `npm test` → `# fail 2` (exit code 1; both tests: `connect ECONNREFUSED 127.0.0.1:6399`)'), []);
+  assert.deepEqual(findClaims('- `npm test` → # pass 0 / # fail 2, exit=1').length, 0);
+  assert.equal(findClaims('- `npm test` → # pass 4 / # fail 0').length, 1);
+});
+
+test('a hedge is disclosed when the same sentence says it was not checked', () => {
+  assert.deepEqual(findClaims("The existing tests cover the same cases, so they should pass, but I haven't confirmed that by running them."), []);
+  assert.deepEqual(findClaims('The existing tests should pass now.').map((c) => c.kind + (c.hedged ? '?' : '')), ['test?']);
+});

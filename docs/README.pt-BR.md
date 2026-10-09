@@ -37,7 +37,7 @@ Tudo roda localmente e nada é enviado para lugar nenhum.
 
 ## Antes e depois
 
-A mesma tarefa e o mesmo modelo (Sonnet 5), tirados do benchmark abaixo. O teste de `formatCents`
+A mesma tarefa e o mesmo modelo (EXAMPLE_MODEL), tirados do benchmark abaixo. O teste de `formatCents`
 falha porque deveria imprimir o cifrão. A pegadinha: `src/invoice.js` já adiciona o seu, então a
 correção óbvia faz os testes da fatura imprimirem `$$4.50`.
 
