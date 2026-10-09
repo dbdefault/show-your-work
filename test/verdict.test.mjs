@@ -248,3 +248,8 @@ test('a message that says the suite still fails is not hiding a failure', () => 
     .say('The full suite still exits 1: 2 of 3 tests pass, and the one failure is the existing "set then get" test, which needs the cache server.');
   assert.deepEqual(types(run(s)), []);
 });
+
+test('a placeholder in a cited command stands for what was there', () => {
+  assert.equal(wasRun('node /tmp/check/check.mjs <repo>/src/cache.js', ['node /tmp/check/check.mjs /tmp/work/app/src/cache.js']), true);
+  assert.equal(wasRun('node /tmp/check/check.mjs <repo>/src/cache.js', ['node /tmp/other.mjs /tmp/work/app/src/cache.js']), false);
+});
