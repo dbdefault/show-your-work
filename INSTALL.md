@@ -14,14 +14,19 @@ Everything runs on your machine. Nothing is sent anywhere.
 
 ## Claude Code: the rules and the check
 
-In Claude Code, as two prompts:
+In Claude Code:
 
 ```
-/plugin marketplace add dheerajjha/show-your-work
-/plugin install show-your-work@show-your-work
+/plugin install show-your-work --marketplace dheerajjha/show-your-work
 ```
 
 Or from a terminal:
+
+```bash
+claude plugin install show-your-work --marketplace dheerajjha/show-your-work
+```
+
+Claude Code older than 2.1.275 needs two steps:
 
 ```bash
 claude plugin marketplace add dheerajjha/show-your-work
