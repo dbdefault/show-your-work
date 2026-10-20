@@ -34,6 +34,42 @@ test('zero tests is not a pass', () => {
   }
 });
 
+test('zero tests from rspec, ExUnit, Swift, Deno and ctest are not passes', () => {
+  for (const text of [
+    'No examples found.\n0 examples, 0 failures',
+    '0 tests, 0 failures',
+    'Executed 0 tests, with 0 failures',
+    'ok | 0 passed | 0 failed (0 steps)',
+    'No tests were found!!!',
+  ]) {
+    assert.equal(outcomeOf({ isError: false, text }, T).status, 'empty', text);
+  }
+  for (const text of ['3 examples, 0 failures', '4 tests, 0 failures']) {
+    assert.equal(outcomeOf({ isError: false, text }, T).status, 'passed', text);
+  }
+});
+
+test('a non-empty Swift suite and Elixir umbrella are not mistaken for empty runs', () => {
+  const emptySwift = 'Test Suite \'EmptyTests\' passed\n\t Executed 0 tests, with 0 failures';
+  const emptyElixir = '0 tests, 0 failures';
+  const swift = [
+    "Test Suite 'EmptyTests' passed",
+    '\t Executed 0 tests, with 0 failures (0 unexpected) in 0.000 seconds',
+    "Test Suite 'MathTests' passed",
+    '\t Executed 4 tests, with 0 failures (0 unexpected) in 0.012 seconds',
+    "Test Suite 'All tests' passed",
+    '\t Executed 4 tests, with 0 failures (0 unexpected) in 0.012 seconds',
+  ].join('\n');
+  const elixir = '0 tests, 0 failures\n12 tests, 0 failures';
+
+  for (const text of [emptySwift, emptyElixir]) {
+    assert.equal(outcomeOf({ isError: false, text }, T).status, 'empty', text);
+  }
+  for (const text of [swift, elixir]) {
+    assert.equal(outcomeOf({ isError: false, text }, T).status, 'passed', text);
+  }
+});
+
 test('a command that never ran is reported as such', () => {
   assert.equal(outcomeOf({ isError: true, text: '<tool_use_error>Blocked: sleep 25</tool_use_error>' }, T).status, 'notrun');
   assert.equal(outcomeOf({ isError: true, text: "The user doesn't want to proceed with this tool use." }, T).status, 'notrun');
