@@ -284,3 +284,18 @@ for (const [runner, report] of [
   s.tool('Task', { description: 'run the suite' }, { text: report }).say('All tests pass.');
   assert.deepEqual(types(run(s)), ['no-run']);
 });
+
+test('a Bun failure masked by || true is still a failed claim', () => {
+  const v = run(new Session().user('fix it').edit('/work/app/src/a.ts')
+    .bash('bun test || true', ' 2 pass\n 1 fail\nRan 3 tests across 1 files.', { exit: 0 })
+    .say('All tests pass.'));
+  assert.deepEqual(types(v), ['failed']);
+  assert.match(reasonFor(v), /1 fail/);
+});
+
+test('a masked Bun run with zero failures still backs a passing claim', () => {
+  const v = run(new Session().user('fix it').edit('/work/app/src/a.ts')
+    .bash('bun test || true', ' 3 pass\n 0 fail\nRan 3 tests across 1 files.', { exit: 0 })
+    .say('All tests pass.'));
+  assert.deepEqual(types(v), []);
+});
