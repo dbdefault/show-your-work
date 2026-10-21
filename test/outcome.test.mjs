@@ -100,3 +100,14 @@ test("a runner's failure summary wins over exit 0 when a script swallowed the st
   assert.equal(o.quote, '# fail 1');
   assert.match(o.why, /exit status was 0/);
 });
+
+test('ExUnit, Swift and Bun summaries retain useful runner evidence', () => {
+  for (const [text, quote] of [
+    ['4 tests, 0 failures', '4 tests, 0 failures'],
+    ['Executed 3 tests, with 0 failures', 'Executed 3 tests, with 0 failures'],
+    [' 3 pass\n 0 fail\nRan 3 tests across 1 files.', 'Ran 3 tests across 1 files.'],
+    [' 2 pass\n 1 fail\nRan 3 tests across 1 files.', '1 fail'],
+    ['4 tests, 1 failure\n2 tests, 0 failures', '4 tests, 1 failure'],
+    ['Executed 1 test, with 1 failure\nExecuted 3 tests, with 0 failures', 'Executed 1 test, with 1 failure'],
+  ]) assert.equal(summaryOf(text), quote, text);
+});

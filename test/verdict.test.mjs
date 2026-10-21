@@ -254,3 +254,33 @@ test('a placeholder in a cited command stands for what was there', () => {
   assert.equal(wasRun('node /tmp/check/check.mjs <repo>/src/cache.js', ['node /tmp/check/check.mjs /tmp/work/app/src/cache.js']), true);
   assert.equal(wasRun('node /tmp/check/check.mjs <repo>/src/cache.js', ['node /tmp/other.mjs /tmp/work/app/src/cache.js']), false);
 });
+
+for (const [runner, report] of [
+  ['ExUnit', '4 tests, 0 failures'],
+  ['Swift', 'Executed 3 tests, with 0 failures'],
+  ['Bun', ' 3 pass\n 0 fail\nRan 3 tests across 1 files.'],
+]) test(`${runner} Task report backs a passing test claim`, () => {
+  const s = new Session().user('x').edit('/work/app/a.js');
+  s.tool('Task', { description: 'run the suite' }, { text: report }).say('All tests pass.');
+  assert.deepEqual(types(run(s)), []);
+});
+
+for (const [runner, report] of [
+  ['Bun', ' 2 pass\n 1 fail\nRan 3 tests across 1 files.'],
+  ['ExUnit', '4 tests, 1 failure\n2 tests, 0 failures'],
+  ['Swift', 'Executed 1 test, with 1 failure\nExecuted 3 tests, with 0 failures'],
+]) test(`${runner} Task report preserves failures`, () => {
+  const s = new Session().user('x').edit('/work/app/a.js');
+  s.tool('Task', { description: 'run the suite' }, { text: report }).say('All tests pass.');
+  assert.deepEqual(types(run(s)), ['failed']);
+});
+
+for (const [runner, report] of [
+  ['ExUnit', '0 tests, 0 failures'],
+  ['Swift', 'Executed 0 tests, with 0 failures'],
+  ['Bun', ' 0 pass\n 0 fail\nRan 0 tests across 0 files.'],
+]) test(`${runner} empty Task report does not back a passing claim`, () => {
+  const s = new Session().user('x').edit('/work/app/a.js');
+  s.tool('Task', { description: 'run the suite' }, { text: report }).say('All tests pass.');
+  assert.deepEqual(types(run(s)), ['no-run']);
+});
