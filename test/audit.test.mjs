@@ -74,3 +74,72 @@ test('unknown options and commands are refused', () => {
   assert.equal(spawnSync(process.execPath, [BIN, 'audit', '--nope'], { encoding: 'utf8' }).status, 2);
   assert.equal(spawnSync(process.execPath, [BIN, 'frobnicate'], { encoding: 'utf8' }).status, 2);
 });
+
+function isolatedCli(t) {
+  const dir = mkdtempSync(join(tmpdir(), 'syw-options-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  return {
+    dir,
+    run: (args) => spawnSync(process.execPath, [BIN, ...args], {
+      encoding: 'utf8', cwd: dir, env: { ...process.env, HOME: dir, USERPROFILE: dir },
+    }),
+  };
+}
+
+for (const [option, noun] of [['--days', 'days'], ['--limit', 'sessions']]) {
+  for (const value of [undefined, '', 'abc', '0', '-1', '1.5', 'NaN', 'Infinity', '1e3', '0x10', '9007199254740992']) {
+    test(`${option} refuses ${JSON.stringify(value)} as a usage error`, (t) => {
+      const { dir, run } = isolatedCli(t);
+      const result = run(['audit', dir, option, ...(value === undefined ? [] : [value])]);
+      assert.equal(result.status, 2, result.stderr);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, `show-your-work: ${option} needs a number of ${noun}\n`);
+    });
+  }
+
+  test(`${option} never consumes a following option or an existing path`, (t) => {
+    const { dir, run } = isolatedCli(t);
+    mkdirSync(join(dir, '2'));
+    writeFileSync(join(dir, '3'), '\n');
+    for (const args of [
+      ['audit', dir, option, '--json', '1'],
+      ['audit', option, dir],
+      ['audit', dir, option, '2'],
+      ['audit', dir, option, '3'],
+      ['audit', dir, '--all', option, 'bad'],
+    ]) {
+      const result = run(args);
+      assert.equal(result.status, 2, JSON.stringify(args));
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, `show-your-work: ${option} needs a number of ${noun}\n`);
+    }
+  });
+
+  test(`${option} accepts positive integers before or after the path`, (t) => {
+    const { dir, run } = isolatedCli(t);
+    for (const args of [
+      ['audit', dir, option, '1', '--json'],
+      ['audit', option, '01', dir, '--json'],
+    ]) {
+      const result = run(args);
+      assert.equal(result.status, 0, result.stderr);
+      assert.equal(JSON.parse(result.stdout).totals.sessions, 0);
+    }
+  });
+}
+
+test('check rejects unknown options and missing files with exit 2', (t) => {
+  const { dir, run } = isolatedCli(t);
+  const file = join(dir, 'session.jsonl');
+  writeFileSync(file, new Session().user('hello').say('Hello.').toString());
+  for (const args of [['check', '--json', file], ['check', file, '--unknown']]) {
+    const result = run(args);
+    assert.equal(result.status, 2);
+    assert.match(result.stderr, /show-your-work: unknown option --(?:json|unknown)/);
+    assert.equal(result.stdout, '');
+  }
+  const missing = run(['check', join(dir, 'missing.jsonl')]);
+  assert.equal(missing.status, 2);
+  assert.match(missing.stderr, /show-your-work:/);
+  assert.equal(missing.stdout, '');
+});

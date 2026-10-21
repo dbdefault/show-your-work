@@ -170,6 +170,11 @@ It reads `~/.claude/projects` (the last 30 days by default), prints a summary,
 and sends nothing anywhere. In Claude Code, `/show-your-work:audit` does the
 same.
 
+`audit --days <n>` and `--limit <n>` require positive integers. Missing or
+invalid values (including existing paths) exit 2 instead of silently changing
+which sessions are read. `check` also exits 2 for unknown options or a missing
+session file; an unbacked claim still exits 1.
+
 ## How it works
 
 **The rules** ([`skills/show-your-work/SKILL.md`](skills/show-your-work/SKILL.md)):
