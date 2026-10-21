@@ -2,12 +2,19 @@
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-21
+
 ### Fixed
 
-- **Reported test evidence from ExUnit, Swift and Bun.** Task reports with
-  non-empty summaries now back passing test claims. Failure summaries remain
-  visible even when a later suite passed, including Bun's separate failure
-  count; empty reports do not establish a passing run (#5).
+- **A subagent's mix, swift or bun report counts.** A subagent might run the
+  tests and report `4 tests, 0 failures` (ExUnit), `Executed 3 tests, with 0
+  failures` (Swift) or `Ran 3 tests across 1 file.` (Bun). A true "tests
+  pass" after one was stopped as having no test behind it. Those reports now
+  back the claim. A failing suite's line still wins over a later passing one,
+  and a report of zero tests still backs nothing (#5, #8, from @dbdefault).
+- **A Bun failure hidden by `|| true`.** `bun test || true` that printed
+  ` 1 fail` and exited 0 read as a pass. It now reads as failed, as mix, swift
+  and pytest runs already did (#8).
 
 ## [0.1.1] - 2026-10-20
 
@@ -40,6 +47,7 @@ First release.
 - **Rules for agents that read AGENTS.md**, and plugin manifests for Codex,
   Cursor and Copilot CLI.
 
-[Unreleased]: https://github.com/dheerajjha/show-your-work/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/dheerajjha/show-your-work/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/dheerajjha/show-your-work/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/dheerajjha/show-your-work/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/dheerajjha/show-your-work/releases/tag/v0.1.0
