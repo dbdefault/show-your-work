@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **Reported test evidence from ExUnit, Swift and Bun.** Task reports with
+  non-empty summaries now back passing test claims. Failure summaries remain
+  visible even when a later suite passed, including Bun's separate failure
+  count; empty reports do not establish a passing run (#5).
+
 ## [0.1.1] - 2026-10-20
 
 ### Fixed
