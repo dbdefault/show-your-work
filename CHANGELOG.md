@@ -12,7 +12,8 @@
   `bazelisk test`, `turbo run test` (bare or through npx, pnpm or yarn),
   `hatch test`, `pants test` and `dune test` were read as a build or as
   other, so a true "tests pass" after one was stopped. They now count as
-  test runs. `bazel build` stays a build (#4).
+  test runs, as do `dune runtest`, `dune build @runtest` and `hatch run test`.
+  `bazel build` stays a build (#4).
 
 ## [0.1.2] - 2026-10-21
 
