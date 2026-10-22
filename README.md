@@ -171,8 +171,9 @@ and sends nothing anywhere. In Claude Code, `/show-your-work:audit` does the
 same.
 
 `audit --days <n>` and `--limit <n>` require positive integers. Missing or
-invalid values (including existing paths) exit 2 instead of silently changing
-which sessions are read. `check` also exits 2 for unknown options or a missing
+invalid values exit 2 instead of silently changing which sessions are read.
+Numeric option values stay valid even when a same-named file or directory exists.
+`check` also exits 2 for unknown options or a missing
 session file; an unbacked claim still exits 1.
 
 ## How it works

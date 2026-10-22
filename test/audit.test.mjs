@@ -97,15 +97,11 @@ for (const [option, noun] of [['--days', 'days'], ['--limit', 'sessions']]) {
     });
   }
 
-  test(`${option} never consumes a following option or an existing path`, (t) => {
+  test(`${option} never consumes a following option or a non-numeric path`, (t) => {
     const { dir, run } = isolatedCli(t);
-    mkdirSync(join(dir, '2'));
-    writeFileSync(join(dir, '3'), '\n');
     for (const args of [
       ['audit', dir, option, '--json', '1'],
       ['audit', option, dir],
-      ['audit', dir, option, '2'],
-      ['audit', dir, option, '3'],
       ['audit', dir, '--all', option, 'bad'],
     ]) {
       const result = run(args);
@@ -117,9 +113,13 @@ for (const [option, noun] of [['--days', 'days'], ['--limit', 'sessions']]) {
 
   test(`${option} accepts positive integers before or after the path`, (t) => {
     const { dir, run } = isolatedCli(t);
+    mkdirSync(join(dir, '7'));
+    writeFileSync(join(dir, '2'), '\n');
     for (const args of [
       ['audit', dir, option, '1', '--json'],
       ['audit', option, '01', dir, '--json'],
+      ['audit', dir, option, '7', '--json'],
+      ['audit', option, '2', dir, '--json'],
     ]) {
       const result = run(args);
       assert.equal(result.status, 0, result.stderr);
@@ -127,6 +127,16 @@ for (const [option, noun] of [['--days', 'days'], ['--limit', 'sessions']]) {
     }
   });
 }
+
+test('numeric option values remain valid together when matching paths exist', (t) => {
+  const { dir, run } = isolatedCli(t);
+  mkdirSync(join(dir, '7'));
+  writeFileSync(join(dir, '2'), '\n');
+  writeFileSync(join(dir, '7', 'one.jsonl'), twoTurns().toString());
+  const result = run(['audit', dir, '--days', '7', '--limit', '2', '--json']);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).totals.sessions, 1);
+});
 
 test('check rejects unknown options and missing files with exit 2', (t) => {
   const { dir, run } = isolatedCli(t);

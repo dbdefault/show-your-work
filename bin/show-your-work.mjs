@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // show-your-work: hold a coding agent's claims up against what actually ran.
 
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { runHook } from '../lib/hook.mjs';
@@ -46,7 +46,7 @@ function option(args, name) {
   const i = args.indexOf(name);
   if (i === -1) return undefined;
   const v = args[i + 1];
-  if (typeof v !== 'string' || !/^\d+$/.test(v) || !Number.isSafeInteger(Number(v)) || Number(v) <= 0 || existsSync(v)) {
+  if (typeof v !== 'string' || !/^\d+$/.test(v) || !Number.isSafeInteger(Number(v)) || Number(v) <= 0) {
     const noun = name === '--days' ? 'days' : 'sessions';
     throw new UsageError(`${name} needs a number of ${noun}`);
   }
