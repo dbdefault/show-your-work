@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Reject invalid `audit --days` and `--limit` values instead of silently
+  ignoring them or consuming a non-numeric session path. Valid numeric values
+  remain valid when a same-named file or directory exists. `check` now exits 2 for unknown
+  options or a missing file; an unbacked claim still exits 1 (#6).
+
 ## [0.1.2] - 2026-10-21
 
 ### Fixed

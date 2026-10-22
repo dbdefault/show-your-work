@@ -40,12 +40,18 @@ function flag(args, name) {
   return true;
 }
 
+class UsageError extends Error {}
+
 function option(args, name) {
   const i = args.indexOf(name);
   if (i === -1) return undefined;
   const v = args[i + 1];
+  if (typeof v !== 'string' || !/^\d+$/.test(v) || !Number.isSafeInteger(Number(v)) || Number(v) <= 0) {
+    const noun = name === '--days' ? 'days' : 'sessions';
+    throw new UsageError(`${name} needs a number of ${noun}`);
+  }
   args.splice(i, 2);
-  return v;
+  return Number(v);
 }
 
 async function main(argv) {
@@ -60,26 +66,35 @@ async function main(argv) {
       process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: RULES } }) + '\n');
       return 0;
     case 'audit': {
-      const json = flag(args, '--json');
-      const all = flag(args, '--all');
       const days = option(args, '--days');
       const limit = option(args, '--limit');
+      const json = flag(args, '--json');
+      const all = flag(args, '--all');
       const unknown = args.find((a) => a.startsWith('-'));
       if (unknown) {
         process.stderr.write(`show-your-work: unknown option ${unknown}\n`);
         return 2;
       }
-      const result = audit({ paths: args, days: all ? 0 : Number(days ?? 30), limit: limit ? Number(limit) : undefined });
-      process.stdout.write(json ? JSON.stringify(result, null, 2) + '\n' : formatAudit(result, { days: all ? 0 : Number(days ?? 30) }));
+      const result = audit({ paths: args, days: all ? 0 : (days ?? 30), limit });
+      process.stdout.write(json ? JSON.stringify(result, null, 2) + '\n' : formatAudit(result, { days: all ? 0 : (days ?? 30) }));
       return 0;
     }
     case 'check': {
+      const unknown = args.find((a) => a.startsWith('-'));
+      if (unknown) throw new UsageError(`unknown option ${unknown}`);
       const file = args[0];
       if (!file) {
         process.stderr.write('show-your-work: check needs a session file\n');
         return 2;
       }
-      const { events, cwd } = readSession(file);
+      let session;
+      try {
+        session = readSession(file);
+      } catch (err) {
+        if (err.code === 'ENOENT') throw new UsageError(err.message);
+        throw err;
+      }
+      const { events, cwd } = session;
       const verdict = judge(events, { cwd });
       if (!verdict.claims.length && !verdict.cited.length) {
         process.stdout.write('No claims in the last message.\n');
@@ -110,5 +125,5 @@ async function main(argv) {
 
 main(process.argv).then((code) => { process.exitCode = code; }, (err) => {
   process.stderr.write(`show-your-work: ${err && err.message ? err.message : err}\n`);
-  process.exitCode = 1;
+  process.exitCode = err instanceof UsageError ? 2 : 1;
 });
